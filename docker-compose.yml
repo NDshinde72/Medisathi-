@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL with pgvector extension support
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ruralcare_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ruralcare_db
+      POSTGRES_USER: ruralcare_user
+      POSTGRES_PASSWORD: ruralcare_secure_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docs/database-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ruralcare_user -d ruralcare_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ruralcare_backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://ruralcare_user:ruralcare_secure_pass@postgres:5432/ruralcare_db
+      - JWT_SECRET=super_secret_jwt_key_ruralcare_ai_be_it_project_2026_change_in_production
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VECTOR_DB_PATH=/app/data/vector_store
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./knowledge_base:/app/knowledge_base
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 3. React Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: ruralcare_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

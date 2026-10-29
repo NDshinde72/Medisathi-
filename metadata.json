@@ -1,0 +1,10 @@
+{
+  "name": "Remix RuralCare AI - Rural Healthcare Decision Support Platform",
+  "description": "AI-based personalized rural healthcare decision support platform featuring symptom assessment, RAG medical guidance, report OCR analysis, multilingual triage, and doctor \u0026 admin dashboards.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
